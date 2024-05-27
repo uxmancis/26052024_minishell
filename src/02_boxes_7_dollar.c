@@ -590,14 +590,133 @@ char *get_word_2(t_box **box, t_x_y_rest_info x_y)
 */
 int is_in_env(t_box **box, t_x_y_rest_info x_y, t_prompt **prompt)
 {
-    //printf("          is word in env? ");
+    printf("          is word in env? ");
     if (ft_getenv_local((*prompt)->vars, get_word_2(box, x_y)))
     {
-        printf(GREEN"          YES"RESET_COLOR);
+        printf(GREEN" YES\n"RESET_COLOR);
         return (1);
     }
-    printf(RED"          NO"RESET_COLOR);   
+    printf(RED" NO\n"RESET_COLOR);   
     return (0);
+}
+
+void cpy_to_val(char *str_src, char **str_dst)
+{
+    int len;
+    int i;
+
+    len = ft_strlen(str_src);
+    i = 0;
+    while (len > 0)
+    {
+        (*str_dst)[i] = str_src[i];
+        len--;
+        i++;
+    }
+}
+
+void get_old_word(char *str_src, char **str_dst)
+{
+    int len_src;
+    int i;
+
+    len_src = ft_strlen(str_src);
+    i = 0;
+    while (len_src > 0)
+    {
+        (*str_dst)[i] = str_src[i];
+        len_src--;
+        i++;
+    }
+}
+
+void replace_env(t_box **box, t_x_y_rest_info x_y, char *tmp_val)
+{
+    int ind_new_word;
+    char *tmp_old_word_before_free;
+    int new_len;
+    int ind_dollar;
+    int ind_old_word;
+    int len_val;
+    int ind_val;
+    int keep_len_new_word;
+    char *str_to_find;
+    int len_str_to_find;
+    printf("replace_env | x = %d, y = %d\n", x_y.index_x, x_y.index_y);
+    ind_new_word = 0;
+    
+    //1st: copy old info (old word in rest_info y la palabra a buscar)
+    tmp_old_word_before_free = malloc(sizeof(char) * (ft_strlen((*box)->rest_info_potential_cmd[x_y.index_x]) + 1));
+    tmp_old_word_before_free[ft_strlen((*box)->rest_info_potential_cmd[x_y.index_x])] = '\0';
+    get_old_word((*box)->rest_info_potential_cmd[x_y.index_x], &tmp_old_word_before_free); //tmp_old_word_before_free ya lo tee
+    str_to_find = get_word_2(box, x_y);
+    len_str_to_find = ft_strlen(str_to_find);
+    
+    //2. Hacer free de la info antigua
+    ft_free((*box)->rest_info_potential_cmd[x_y.index_x]);
+    new_len = ft_strlen(tmp_old_word_before_free) - 1 - ft_strlen(str_to_find) + ft_strlen(tmp_val);
+    (*box)->rest_info_potential_cmd[x_y.index_x] = malloc(sizeof(char)*(new_len + 1));
+    (*box)->rest_info_potential_cmd[x_y.index_x][new_len] = '\0';
+    ind_dollar = x_y.index_y;
+    x_y.index_y = 0;
+    ind_old_word = 0;
+    len_val = ft_strlen(tmp_val);
+    ind_val = 0;
+    keep_len_new_word = new_len;
+    printf("new_len = %d\n", new_len);
+    while (new_len > 0)
+    {
+        //1. si antes del dólar hay cositas, copiarlas
+        while (ind_new_word < ind_dollar)
+        {
+            (*box)->rest_info_potential_cmd[x_y.index_x][x_y.index_y] = tmp_old_word_before_free[ind_old_word];
+            ind_new_word++;
+            ind_old_word++;
+            x_y.index_y++;
+        }
+
+        //2. una vez llegamos a la posición del dólar
+        if (ind_new_word == ind_dollar)
+        {
+            ind_old_word++; // pasar del dólar
+            while (len_str_to_find > 0)
+            {
+                ind_old_word++; //de la palabra "USER" también vamos a pasar
+                len_str_to_find--;
+            }
+            while (len_val > 0)
+            {
+                printf("y = %d, ind_val = %d\n", x_y.index_y, ind_val);
+                (*box)->rest_info_potential_cmd[x_y.index_x][x_y.index_y] = tmp_val[ind_val];
+                ind_val++;
+                x_y.index_y++;
+                len_val--;
+            }
+        }
+
+        //3. Si todavía hay más info después de val
+        while ((x_y.index_y + 1) < keep_len_new_word)
+        {
+            (*box)->rest_info_potential_cmd[x_y.index_x][x_y.index_y] = tmp_old_word_before_free[ind_old_word];
+            x_y.index_y++;
+            ind_old_word++;
+        }
+        new_len--;
+    }
+}
+
+
+void mng_to_replace_env(t_box **box, t_x_y_rest_info x_y, t_prompt **prompt)
+{
+    int len_val;
+    char *tmp_val; //funtzio honetan eukitzeko bakarrik, por readability
+
+    len_val = ft_strlen((ft_getenv_local((*prompt)->vars, get_word_2(box, x_y)))->val);
+    tmp_val = malloc(sizeof(char)*(len_val + 1));
+    tmp_val[len_val] = '\0';
+    cpy_to_val ((ft_getenv_local((*prompt)->vars, get_word_2(box, x_y)))->val, &tmp_val);
+    printf("          mngt_to_replace_env | tmp_val copied! = "YELLOW"%s\n"RESET_COLOR, tmp_val);
+    replace_env(box, x_y, tmp_val);
 }
 
 /*
@@ -630,7 +749,8 @@ int find_dollars_and_replace(t_box **box, t_x_y_rest_info x_y, int **tmp_dict_qu
             }
             else if (is_in_env(box, x_y, prompt)) //sí en env . Coger hassta fin palabra o hasta próximo dólar
             {
-                //printf(" - yes variable exists in env\n");
+                printf("          yes variable exists in env, x = %d, y = %d\n", x_y.index_x, x_y.index_y);
+                mng_to_replace_env(box, x_y, prompt);
             }
             else //no en env
             {
@@ -646,7 +766,6 @@ int find_dollars_and_replace(t_box **box, t_x_y_rest_info x_y, int **tmp_dict_qu
     //printf("tmp_dict_qotes[%d] = %d\n", 0, (*tmp_dict_quotes_word)[0]);
     //printf("tmp_dict_qotes[%d] = %d\n", 1, (*tmp_dict_quotes_word)[1]);
     //printf("tmp_dict_qotes[%d] = %d\n", 2, (*tmp_dict_quotes_word)[2]);
-
     return (0);
 }
 

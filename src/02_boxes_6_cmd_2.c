@@ -25,7 +25,7 @@ void init_what_to_take(t_box **box)
     int i;
 
     i = 0;
-    len = ft_strlen((*box)->what_to_take);
+    len = ft_strlen((*box)->input_substr);
     while (len > 0)
     {
         (*box)->what_to_take[i] = 'Y';

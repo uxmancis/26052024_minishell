@@ -40,7 +40,7 @@ static void	ft_export_all(t_vars *list)
 // }
 t_vars *ft_getenv_local(t_vars *line, char *name)
 {
-	printf("     00_env_data.c - "YELLOW"ft_getenv_local"RESET_COLOR" | str to find = %s\n", name);
+	//printf("     00_env_data.c - "YELLOW"ft_getenv_local"RESET_COLOR" | str to find = %s\n", name);
 	if (line == NULL) 
 	{
 		perror("Error: No  or pwd\n");
