@@ -168,11 +168,11 @@ int next_is_sec_dollar(t_box **box, t_x_y_rest_info x_y)
     {
         if ((*box)->rest_info_potential_cmd[x_y.index_x][x_y.index_y + 1] == '$')
         {
-            //printf("second dollar identified!\n");
+            printf("second dollar identified!\n");
             return (1);
         }
     }
-    //printf("no second dollar\n");
+    printf("no second dollar\n");
     return (0);
 }
 
@@ -308,9 +308,10 @@ int get_len_word(t_box **box, t_x_y_rest_info x_y)
     int counter; //len_potential_env_variable_word;
     int len_word;
 
-    //printf("get_len_word, x = %d, y = %d\n", x_y.index_x, x_y.index_y);
+    printf("get_len_word, x = %d, y = %d\n", x_y.index_x, x_y.index_y);
     counter = 0;
     len_word = ft_strlen((*box)->rest_info_potential_cmd[x_y.index_x]);
+    printf("len_word = %d, y = %d\n", len_word, x_y.index_y);
     x_y.index_y++; //i = posición de dólar. HUrrengotik hasi bihar gara - Ezta aktualizauko bueltan, eztoulako &-akin bialdu
     while (x_y.index_y < len_word)
     {
@@ -319,10 +320,12 @@ int get_len_word(t_box **box, t_x_y_rest_info x_y)
             counter++;
             x_y.index_y++;
         }
+        printf("y = %d, len_word = %d\n", x_y.index_y, len_word);
         if (x_y.index_y == len_word)
             break; //safety
+        x_y.index_y++;
     }
-    //printf("counter = %d\n", counter);
+    printf("counter = %d\n", counter);
     return (counter);
 }
 
@@ -564,8 +567,9 @@ char *get_word_2(t_box **box, t_x_y_rest_info x_y)
     int len_word;
     int x;
 
+    printf("get_word_2\n");
     len_word = get_len_word(box, x_y);
-    //printf("          len_word_potential_variable = %d\n", len_word);
+    printf("          len_word_potential_variable = %d\n", len_word);
     env_variable = malloc(sizeof(char) * (len_word + 1));
     env_variable[len_word] = '\0';
     x_y.index_y++; //i = dolarran posiziñua. Hurrengotik hasi bihar gara
@@ -577,7 +581,7 @@ char *get_word_2(t_box **box, t_x_y_rest_info x_y)
         x++;
         x_y.index_y++;
     }
-    //printf("get_word_2 | word to find in env: %s\n", env_variable);
+    printf("get_word_2 | word to find in env: %s\n", env_variable);
     return (env_variable);
 }
 
@@ -725,7 +729,7 @@ void mng_to_replace_env(t_box **box, t_x_y_rest_info x_y, t_prompt **prompt)
 int find_dollars_and_replace(t_box **box, t_x_y_rest_info x_y, int **tmp_dict_quotes_word, t_prompt **prompt)
 {
     //int len_word; //to debug
-    
+    printf(MAGENTA"find_dollars_and_replace, x = %d, y = %d\n"RESET_COLOR, x_y.index_x, x_y.index_y);
     //len_word = ft_strlen((*box)->rest_info_potential_cmd[x_y.index_x]);
     //printf("     find_dollars_and_replace | "MAGENTA"y = %d, len_word = %d\n"RESET_COLOR, x_y.index_y, len_word);
     /*while (len_word > 0)
@@ -734,14 +738,15 @@ int find_dollars_and_replace(t_box **box, t_x_y_rest_info x_y, int **tmp_dict_qu
       */
     if (is_dollar(box, x_y, tmp_dict_quotes_word))
     {
-        //printf(YELLOW"          dollar was found\n"RESET_COLOR);
+        printf(YELLOW"          dollar was found\n"RESET_COLOR);
         if (next_is_space_or_end(box, x_y))
             return (0); //no need to replace, $ stays
         else //después tiene contenido el dólar
         {
+            printf(YELLOW"else\n"RESET_COLOR);
             if (next_is_sec_dollar(box, x_y)) //$$
             {
-                //printf("               two dollars here! let's get pid! - ");
+                printf("               two dollars here! let's get pid! - ");
                 mng_to_replace_sec_dollar(box, x_y, tmp_dict_quotes_word);
                 //printf(YELLOW"uxu we're here\n"RESET_COLOR);
                 //printf("tmp_dict_qotes[%d] = %d\n", 0, (*tmp_dict_quotes_word)[0]);
@@ -754,7 +759,7 @@ int find_dollars_and_replace(t_box **box, t_x_y_rest_info x_y, int **tmp_dict_qu
             }
             else //no en env
             {
-                //printf(" - no variable is not in env\n");
+                printf(" - no variable is not in env\n");
                 mng_to_replace_delete(box, x_y, prompt);
             }
         }
